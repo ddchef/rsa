@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://cdn.bootcss.com/bootstrap/4.0.0-beta.2/css/bootstrap.css" rel="stylesheet">
+  <script src="https://cdn.bootcss.com/crypto-js/3.1.9/crypto-js.js"></script>
+  <script src="https://cdn.bootcss.com/jsencrypt/2.3.1/jsencrypt.js"></script>
+  <script src="https://cdn.bootcss.com/axios/0.17.1/axios.js"></script>
+  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.js"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/4.0.0-beta.2/js/bootstrap.bundle.js"></script>
+  <title>RSA加密测试</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="form-group col-lg-6">
+        <label for="noun">明文</label>
+        <textarea class="form-control" id="noun" rows="5"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-3">
+        <button type="button" id="test" class="btn btn-primary">测试</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-lg-6">
+        <label for="ciphertext">密文(RSA加密后的结果)</label>
+        <textarea class="form-control" id="ciphertext" rows="5"></textarea>
+      </div>
+      <div class="form-group col-lg-6">
+        <label for="ciphertext">密文(RSA加密后的结果又进行base64编码)</label>
+        <textarea class="form-control" id="ciphertext_base64" rows="5"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-lg-6">
+        <label for="decrypt">后台解密</label>
+        <textarea class="form-control" id="decrypt" rows="5"></textarea>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+  (function () {
+    var jsc = new JSEncrypt()
+    $('#test').on('click', function () {
+      $.get('/public', function (res) {
+        var public = res.public
+        jsc.setPublicKey(public)
+        var noun = $('#noun').val()
+        var str = ''
+        try {
+          str = jsc.encrypt(noun)
+          if (str != '') {
+            $('#ciphertext').val(CryptoJS.enc.Base64.parse(str))
+            $('#ciphertext_base64').val(str)
+            $('.alert').alert('close')
+            $.post('/login', {
+              password: str
+            }, function (res) {
+              if (res.code == 200)
+                $('#decrypt').val(res.text)
+            })
+            return
+          }
+          $('#ciphertext').val('')
+          $('#ciphertext_base64').val('')
+          $('#decrypt').val('')
+          $('body').prepend(`<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>加密失败!</strong> 可能是明文太长了
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>`)
+        } catch (error) {}
+      })
+    })
+
+  })($)
+</script>
+
+</html>
